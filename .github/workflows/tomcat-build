@@ -1,0 +1,49 @@
+name: Build Tomcat
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Check out your own repository (containing tomcat-users.xml)
+      - name: Check out config repository
+        uses: actions/checkout@v4
+
+      - name: List project files and java version
+        run: |
+          ls -ltr
+          java -version
+
+      # 2. Check out the external Tomcat source code into a subfolder
+      - name: Check out Apache Tomcat
+        uses: actions/checkout@v4
+        with:
+          repository: apache/tomcat
+          ref: main
+          path: ./tomcat
+
+      # 3. Set up the specific Java version
+      # Note: updated to v4 as v1 is very outdated; added required 'distribution'
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21.0.4'
+          distribution: 'temurin'
+          java-package: jdk
+          architecture: x64
+
+      - name: List project files and java version after setup
+        run: |
+          ls -ltr
+          java -version
+
+      # 4. Copy the config file from your repo into the Tomcat folder
+      - name: Copy tomcat-users.xml into Tomcat configuration directory
+        run: cp -v tomcat-users.xml ./tomcat/conf/tomcat-users.xml
+
+      # 5. Build the project using Ant
+      - name: Compile Tomcat
+        run: |
+          cd ./tomcat
+          ant
